@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Full-screen black background suits a map + Wear OS. -->
+    <style name="AppTheme" parent="@android:style/Theme.DeviceDefault">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+
+        <!--
+            Wear dismisses an activity on any left-to-right swipe, anywhere on
+            the screen — it is not an edge gesture. On a map that is the same
+            movement as a pan, so the window-level gesture closed the app every
+            time you dragged the map sideways.
+
+            Turning it off hands back navigation entirely to the app's own
+            SwipeToDismissBox (the Compose nav host), which is what Wear Compose
+            expects: the nav host pops screens, and the map restricts dismissal
+            to its leading edge so panning is just panning. Without this, no
+            amount of Compose-side arbitration helps, because the window acts
+            before the composition ever sees the gesture.
+        -->
+        <item name="android:windowSwipeToDismiss">false</item>
+    </style>
+</resources>

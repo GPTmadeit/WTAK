@@ -1,0 +1,37 @@
+# ---- build output --------------------------------------------------------
+*.iml
+.gradle/
+.kotlin/
+/.idea/
+/build
+/app/build/
+/captures
+.externalNativeBuild
+.cxx
+.DS_Store
+
+# ---- machine-specific ----------------------------------------------------
+local.properties
+
+# ---- signing material: never commit --------------------------------------
+# A leaked signing key lets anyone publish an update Android accepts as this
+# app. These patterns are deliberately broad — it is cheap to add an exception
+# and expensive to notice one of these in a public history.
+keystore.properties
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.csr
+
+# ---- test fixtures generated locally -------------------------------------
+# FakeEud writes a throwaway PKI here, plus injected CoT frames.
+/tools/tls/
+/tools/*.bin
+/tools/*.class
+/tools/*.mbtiles

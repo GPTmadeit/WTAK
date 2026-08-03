@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WTAK</string>
+
+    <string name="tracking_channel_name">Position tracking</string>
+    <string name="tracking_title">%1$s · tracking</string>
+    <string name="tracking_sharing">Sharing position over %1$s</string>
+    <string name="tracking_local_only">Position tracked locally</string>
+</resources>

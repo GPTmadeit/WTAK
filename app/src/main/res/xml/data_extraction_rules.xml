@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  This app holds an enrolled TAK client certificate and its private key, plus
+  the server it reports to. None of that should leave the device through cloud
+  backup or a device-to-device transfer: a certificate copied onto another
+  device would let it impersonate this operator on the network.
+
+  Enrolment is cheap to repeat, so excluding everything is the right trade.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

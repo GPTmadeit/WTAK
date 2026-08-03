@@ -1,0 +1,1118 @@
+<title>WTAK — Install &amp; Field Guide</title>
+
+<style>
+  /* ---------------------------------------------------------------- tokens */
+  :root {
+    color-scheme: light dark;
+
+    --mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", "SF Mono", Consolas,
+            "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+    /* Light ground: topographic map paper, cooled slightly toward the accent. */
+    --ground: #F1F3EF;
+    --surface: #FFFFFF;
+    --surface-2: #E9EDE9;
+    --line: #D2D9D5;
+    --ink: #101820;
+    --muted: #55626B;
+
+    --accent: #1F6FBF;      /* blue force */
+    --accent-soft: #E4EEF8;
+    --cyan: #00897B;        /* waypoint */
+    --hostile: #C62B2B;
+    --neutral: #2E8F49;
+    --unknown: #A9800F;
+
+    --radius: 10px;
+    --step: clamp(0.97rem, 0.93rem + 0.18vw, 1.08rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0B0F14;
+      --surface: #131A22;
+      --surface-2: #0F151C;
+      --line: #223040;
+      --ink: #E4EDF4;
+      --muted: #8C9BA8;
+
+      --accent: #3D9BE9;
+      --accent-soft: #12283C;
+      --cyan: #00E0C0;
+      --hostile: #E23B3B;
+      --neutral: #35C759;
+      --unknown: #F2C037;
+    }
+  }
+
+  /* The viewer's toggle must win over the media query, in both directions. */
+  :root[data-theme="dark"] {
+    --ground: #0B0F14;
+    --surface: #131A22;
+    --surface-2: #0F151C;
+    --line: #223040;
+    --ink: #E4EDF4;
+    --muted: #8C9BA8;
+    --accent: #3D9BE9;
+    --accent-soft: #12283C;
+    --cyan: #00E0C0;
+    --hostile: #E23B3B;
+    --neutral: #35C759;
+    --unknown: #F2C037;
+  }
+  :root[data-theme="light"] {
+    --ground: #F1F3EF;
+    --surface: #FFFFFF;
+    --surface-2: #E9EDE9;
+    --line: #D2D9D5;
+    --ink: #101820;
+    --muted: #55626B;
+    --accent: #1F6FBF;
+    --accent-soft: #E4EEF8;
+    --cyan: #00897B;
+    --hostile: #C62B2B;
+    --neutral: #2E8F49;
+    --unknown: #A9800F;
+  }
+
+  /* ----------------------------------------------------------------- base */
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: var(--step);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .eyebrow, .kicker, code, kbd, pre, .data { font-family: var(--mono); }
+
+  h2, h3 { text-wrap: balance; line-height: 1.2; }
+
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible,
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  code {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 0.08em 0.35em;
+    font-size: 0.86em;
+    word-break: break-word;
+  }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 0.9rem 1.1rem;
+    overflow-x: auto;          /* wide commands scroll here, never the page */
+    font-size: 0.82em;
+    line-height: 1.6;
+    margin: 0;
+  }
+  pre code { background: none; border: 0; padding: 0; font-size: 1em; }
+
+  /* --------------------------------------------------------------- layout */
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 clamp(1rem, 4vw, 2.5rem);
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(2rem, 5vw, 4rem);
+    padding-bottom: 5rem;
+  }
+
+  /* Base state first — a later bare rule would otherwise beat the media query
+     and collapse the layout into the rail's track. */
+  .rail { display: none; }
+
+  @media (min-width: 1024px) {
+    .shell { grid-template-columns: 210px minmax(0, 1fr); align-items: start; }
+    .rail { position: sticky; top: 2rem; display: block; }
+  }
+
+  .rail ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; }
+  .rail a {
+    display: block;
+    padding: 0.3rem 0.55rem;
+    border-left: 2px solid var(--line);
+    color: var(--muted);
+    text-decoration: none;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.02em;
+  }
+  .rail a:hover { color: var(--ink); border-left-color: var(--accent); background: var(--surface-2); }
+  .rail .rail-title {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 0.7rem 0.55rem;
+  }
+
+  .col { max-width: 72ch; display: grid; gap: 3.2rem; }
+
+  section { scroll-margin-top: 1.5rem; display: grid; gap: 1rem; }
+
+  /* ----------------------------------------------------------------- hero */
+  .hero {
+    position: relative;
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+    background: var(--surface-2);
+  }
+  /* MGRS-style grid: 1 km squares over a night map. */
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, color-mix(in srgb, var(--accent) 22%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--accent) 22%, transparent) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 70% at 20% 0%, #000 20%, transparent 78%);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .hero-inner {
+    position: relative;
+    padding: clamp(3rem, 9vw, 6rem) 0 clamp(2.2rem, 5vw, 3.4rem);
+    display: grid;
+    gap: 1.15rem;
+    max-width: 74ch;
+  }
+  .eyebrow {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .eyebrow .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 22%, transparent);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(2.1rem, 1.2rem + 4vw, 3.9rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+  h1 .thin { color: var(--muted); font-weight: 400; }
+  .lede { margin: 0; font-size: clamp(1.02rem, 0.9rem + 0.5vw, 1.2rem); color: var(--muted); max-width: 60ch; }
+
+  .facts {
+    display: flex; flex-wrap: wrap; gap: 0.45rem;
+    margin-top: 0.4rem; padding: 0; list-style: none;
+  }
+  .facts li {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    padding: 0.28rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ------------------------------------------------------------ headings */
+  h2 {
+    margin: 0;
+    font-size: clamp(1.35rem, 1.05rem + 1vw, 1.85rem);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+  }
+  h2 .num {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    flex: none;
+  }
+  h3 {
+    margin: 1.2rem 0 0;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  p { margin: 0; }
+
+  /* --------------------------------------------------------------- pieces */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .note {
+    border-left: 3px solid var(--unknown);
+    background: color-mix(in srgb, var(--unknown) 8%, var(--surface));
+    padding: 0.85rem 1.1rem;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 0.92em;
+  }
+  .note strong { color: var(--ink); }
+
+  .warn {
+    border-left: 3px solid var(--hostile);
+    background: color-mix(in srgb, var(--hostile) 8%, var(--surface));
+    padding: 0.85rem 1.1rem;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 0.92em;
+  }
+
+  ol.steps { list-style: none; counter-reset: s; margin: 0; padding: 0; display: grid; gap: 1.4rem; }
+  ol.steps > li { counter-increment: s; display: grid; grid-template-columns: 2rem 1fr; gap: 0.9rem; }
+  ol.steps > li::before {
+    content: counter(s, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    padding-top: 0.28rem;
+    letter-spacing: 0.04em;
+  }
+  ol.steps .body { display: grid; gap: 0.6rem; min-width: 0; }
+  ol.steps h4 { margin: 0; font-size: 1em; font-family: var(--sans); font-weight: 650; }
+
+  ul.plain { margin: 0; padding-left: 1.15rem; display: grid; gap: 0.35rem; }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88em; min-width: 30rem; }
+  th, td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.opt { font-family: var(--mono); font-size: 0.86em; white-space: nowrap; color: var(--accent); }
+  td.name { font-weight: 600; white-space: nowrap; }
+
+  /* legend of MIL-STD-2525 frames */
+  .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 0.75rem; }
+  .sym {
+    display: flex; align-items: center; gap: 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 0.7rem 0.85rem;
+  }
+  .sym svg { flex: none; }
+  .sym .label { display: grid; gap: 0.1rem; min-width: 0; }
+  .sym .name { font-weight: 650; font-size: 0.92rem; }
+  .sym .meta { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+
+  .hud { display: grid; gap: 0.55rem; }
+  .hud-row {
+    display: grid; grid-template-columns: 8.5rem 1fr; gap: 0.9rem;
+    padding: 0.55rem 0; border-bottom: 1px dashed var(--line);
+    align-items: baseline;
+  }
+  .hud-row:last-child { border-bottom: 0; }
+  .hud-row .k { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); letter-spacing: 0.02em; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    background: var(--surface-2);
+    padding: 2.2rem 0 3rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  footer .wrap { display: grid; gap: 0.6rem; max-width: 1180px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-inner">
+      <p class="eyebrow"><span class="dot"></span> Wear OS 6 · Pixel Watch 4 · v1.8.0</p>
+      <h1>WTAK<br><span class="thin">install &amp; field guide</span></h1>
+      <p class="lede">
+        A standalone tactical minimap for Wear OS. It puts your position on an
+        offline-capable map, speaks real Cursor-on-Target over mesh or a TAK
+        server, and shares your PLI with the team — from your wrist, with no
+        phone required.
+      </p>
+      <ul class="facts">
+        <li>456 × 456 round</li>
+        <li>Offline maps</li>
+        <li>911 beacon</li>
+        <li>MGRS + Lat/Lon</li>
+        <li>MIL-STD-2525</li>
+        <li>TAK Protocol v1</li>
+        <li>mTLS enrollment</li>
+        <li>No API key</li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<div class="wrap shell">
+  <nav class="rail" aria-label="Sections">
+    <p class="rail-title">Contents</p>
+    <ol>
+      <li><a href="#what">What it is</a></li>
+      <li><a href="#requirements">Requirements</a></li>
+      <li><a href="#build">Build the app</a></li>
+      <li><a href="#install">Install to a watch</a></li>
+      <li><a href="#emulator">Run on an emulator</a></li>
+      <li><a href="#offline">Offline maps</a></li>
+      <li><a href="#eud">Pairing with your EUD</a></li>
+      <li><a href="#firstrun">First run</a></li>
+      <li><a href="#map">Reading the map</a></li>
+      <li><a href="#symbology">Symbology</a></li>
+      <li><a href="#settings">Settings reference</a></li>
+      <li><a href="#network">Connect your team</a></li>
+      <li><a href="#tls">TLS enrollment</a></li>
+      <li><a href="#background">Background &amp; battery</a></li>
+      <li><a href="#trouble">Troubleshooting</a></li>
+    </ol>
+  </nav>
+
+  <main class="col">
+
+    <section id="what">
+      <h2><span class="num">01</span> What it is</h2>
+      <p>
+        WTAK is a purpose-built Wear OS client for the TAK ecosystem. It
+        runs entirely on the watch, draws OpenStreetMap tiles through osmdroid
+        (no Google Maps API key), and models every entity as a
+        Cursor-on-Target event with MIL-STD-2525 affiliations — the same data
+        model ATAK uses.
+      </p>
+      <div class="note">
+        <strong>It is not an ATAK plugin.</strong> ATAK plugins load inside ATAK
+        on a phone or tablet and cannot run on Wear OS. This is an independent
+        TAK client that speaks the same wire formats, so real ATAK end-user
+        devices and TAK servers can see it and it can see them.
+      </div>
+      <p>
+        Everything on screen is real: your own GPS fix, contacts received over
+        the network, and waypoints you place. There is no sample or placeholder
+        data — an empty contact list means nothing has been received yet.
+      </p>
+    </section>
+
+    <section id="requirements">
+      <h2><span class="num">02</span> Requirements</h2>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Needed</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">Watch</td><td>Wear OS 3 or newer (API 30+). Built and tuned for the Pixel Watch 4 (45 mm, Wear OS 6).</td></tr>
+            <tr><td class="name">Android Studio</td><td>Ladybug (2024.2) or newer</td></tr>
+            <tr><td class="name">Android SDK</td><td>Platform 36 + build-tools</td></tr>
+            <tr><td class="name">JDK</td><td>17 (bundled with Android Studio)</td></tr>
+            <tr><td class="name">Network</td><td>Wi-Fi for map tiles and CoT. Tiles are cached to disk once loaded.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="build">
+      <h2><span class="num">03</span> Build the app</h2>
+      <p>Open the project folder in Android Studio and let it sync, or build from the terminal:</p>
+      <pre><code>./gradlew :app:assembleDebug        # debug APK
+./gradlew :app:assembleRelease      # minified release APK (~9 MB)
+./gradlew :app:testDebugUnitTest    # protocol + crypto tests</code></pre>
+      <h3>Signing a release build</h3>
+      <p>
+        Release signing reads an untracked <code>keystore.properties</code>, so no
+        secrets live in the repo. Without it you still get a working
+        <em>unsigned</em> release APK.
+      </p>
+      <pre><code>keytool -genkeypair -alias atakwatch -keyalg RSA -keysize 2048 \
+  -validity 10000 -keystore release.jks
+
+cp keystore.properties.sample keystore.properties
+# then fill in storeFile / storePassword / keyAlias / keyPassword</code></pre>
+    </section>
+
+    <section id="install">
+      <h2><span class="num">04</span> Install to a watch</h2>
+      <ol class="steps">
+        <li>
+          <div class="body">
+            <h4>Enable developer options on the watch</h4>
+            <p>Settings → System → About → tap <strong>Build number</strong> seven times.</p>
+          </div>
+        </li>
+        <li>
+          <div class="body">
+            <h4>Turn on ADB debugging</h4>
+            <p>Settings → Developer options → <strong>ADB debugging</strong>. For a
+            cable-free watch, also enable <strong>Debug over Wi-Fi</strong> and note
+            the IP address it shows.</p>
+          </div>
+        </li>
+        <li>
+          <div class="body">
+            <h4>Connect</h4>
+            <pre><code>adb connect 192.168.1.42:5555   # IP from the watch
+adb devices                     # confirm it is listed</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="body">
+            <h4>Install</h4>
+            <pre><code>adb install -r app/build/outputs/apk/release/app-release.apk</code></pre>
+            <p>The app appears in the watch's app list as <strong>WTAK</strong>.</p>
+          </div>
+        </li>
+      </ol>
+      <div class="note">
+        The watch and your computer must be on the same network for
+        <code>adb connect</code>. If the watch refuses the connection, re-toggle
+        Debug over Wi-Fi to get a fresh pairing.
+      </div>
+    </section>
+
+    <section id="emulator">
+      <h2><span class="num">05</span> Run on an emulator</h2>
+      <p>No watch handy? Create a Wear OS AVD once:</p>
+      <pre><code>sdkmanager "emulator" "system-images;android-34;android-wear;x86_64"
+avdmanager create avd -n atak_watch \
+  -k "system-images;android-34;android-wear;x86_64" -d wearos_large_round</code></pre>
+      <p>Then build, boot, install, feed a GPS fix and screenshot in one command:</p>
+      <pre><code>powershell -ExecutionPolicy Bypass -File scripts\run-on-emulator.ps1 \
+  -Lat 40.7580 -Lon -73.9855</code></pre>
+      <h3>Running a live demo</h3>
+      <p>
+        To show the app working — moving position, a teammate arriving over the
+        mesh, live range and bearing — one command drives the whole scenario:
+      </p>
+      <pre><code>powershell -ExecutionPolicy Bypass -File scripts\demo.ps1</code></pre>
+      <p>
+        It boots a visible emulator, installs, enables CoT mesh, then walks your
+        position while a second callsign transmits genuine TAK Protocol v1
+        reports. Nothing is faked inside the app: <strong>BRAVO-2</strong> appears
+        because something is really transmitting, and ages to red if it stops.
+        Drive the watch with the mouse while it runs; <code>Ctrl-C</code> ends the
+        walk and leaves the emulator up.
+      </p>
+
+      <h3>Two emulator quirks worth knowing</h3>
+      <ul class="plain">
+        <li>Wear emulators boot onto a <strong>charging screen</strong> that covers the app.
+          Dismiss it with <code>adb shell dumpsys battery unplug</code>.</li>
+        <li><code>adb emu geo fix</code> takes <strong>longitude first, then latitude</strong> — easy to reverse.</li>
+      </ul>
+    </section>
+
+    <section id="offline">
+      <h2><span class="num">06</span> Offline maps</h2>
+      <p>
+        Tiles normally stream from OpenStreetMap, which is fine for planning and
+        useless in the field. Load a tile archive and the map renders entirely
+        from local storage — no network, no requests.
+      </p>
+      <ol class="steps">
+        <li>
+          <div class="body">
+            <h4>Get an archive</h4>
+            <p>Export the area you need from MOBAC, QGIS or <code>mbutil</code> as
+            <code>.mbtiles</code>, <code>.sqlite</code>, <code>.gemf</code> or
+            <code>.zip</code>. To try the feature without downloading a basemap,
+            the repo ships a generator:</p>
+            <pre><code>python tools/make_test_mbtiles.py area.mbtiles \
+  --lat 40.758 --lon -73.9855</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="body">
+            <h4>Copy it to the watch</h4>
+            <pre><code>adb shell mkdir -p /sdcard/Android/data/com.atakwatch.minimap/files/maps
+adb push area.mbtiles /sdcard/Android/data/com.atakwatch.minimap/files/maps/</code></pre>
+          </div>
+        </li>
+        <li>
+          <div class="body">
+            <h4>Select it</h4>
+            <p>Settings → <strong>Map</strong> → <strong>Offline</strong>. The row
+            confirms what was found — <code>Offline · 1 file</code>, or
+            <code>none found</code> in red if the folder is empty.</p>
+          </div>
+        </li>
+      </ol>
+      <div class="note">
+        Archives are read straight from storage, so put in only the area you
+        actually need — a country-sized export will fill the watch. Zoom levels
+        outside the archive have no tiles to draw.
+      </div>
+    </section>
+
+    <section id="eud">
+      <h2><span class="num">07</span> Pairing with your EUD</h2>
+      <p>
+        If you already carry a phone running ATAK, the watch can configure itself
+        from it. Your callsign, team, role and server are read straight from
+        ATAK's own settings, so the two devices can't drift apart — and you never
+        type a callsign on a 1.4" screen.
+      </p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>In ATAK</th><th>Becomes on the watch</th></tr></thead>
+          <tbody>
+            <tr><td class="name">My Callsign</td><td>Watch callsign</td></tr>
+            <tr><td class="name">My Team</td><td>Team colour</td></tr>
+            <tr><td class="name">My Role</td><td>Team role</td></tr>
+            <tr><td class="name">My Display Type</td><td>Self CoT type and affiliation</td></tr>
+            <tr><td class="name">Server</td><td>Streaming CoT host</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Once paired, the phone also <strong>relays the CoT it receives</strong> to
+        the watch. The watch can then show the team picture without running its
+        own mesh or server connection, which is a large battery saving.
+      </p>
+      <h3>Setting it up</h3>
+      <ol class="steps">
+        <li>
+          <div class="body">
+            <h4>Install the bridge plugin on the phone</h4>
+            <p>The plugin source ships in <code>atak-plugin/</code>. It builds
+            against the ATAK Plugin SDK from tak.gov (registration required — it
+            is not on Maven); that directory's README has the steps.</p>
+          </div>
+        </li>
+        <li>
+          <div class="body">
+            <h4>Pair the watch to the phone</h4>
+            <p>Normal Wear OS pairing. Nothing TAK-specific.</p>
+          </div>
+        </li>
+        <li>
+          <div class="body">
+            <h4>On the watch, choose "Set up from phone"</h4>
+            <p>On first launch. Later, Settings → <strong>Sync from phone</strong>
+            re-pulls — useful after changing your callsign or team in ATAK.</p>
+          </div>
+        </li>
+      </ol>
+      <div class="note">
+        <strong>The phone is optional.</strong> Choose <em>Set up on watch</em> and
+        everything still works — its own mesh, its own server connection, its own
+        certificate enrolment. Pairing removes duplicate setup and saves battery;
+        it is not a dependency.
+      </div>
+    </section>
+
+    <section id="firstrun">
+      <h2><span class="num">08</span> First run</h2>
+      <p>
+        On launch the app asks for <strong>location</strong> permission — it needs
+        this to place you on the map. Grant it and the map centers on your
+        position as soon as the GPS resolves. Outdoors this takes a few seconds;
+        indoors it can take much longer or never resolve.
+      </p>
+      <p>
+        If you later enable background tracking, the watch also asks for
+        permission to show a <strong>notification</strong>. That notification is the
+        ongoing "tracking" indicator Android requires whenever an app uses
+        location in the background.
+      </p>
+    </section>
+
+    <section id="map">
+      <h2><span class="num">09</span> Reading the map</h2>
+      <p>The map is the home screen. Everything else is one swipe or tap away.</p>
+      <p>
+        A 454 px round screen has no room for a button grid, so there is exactly
+        one button — the menu — and the rest is gesture.
+      </p>
+      <div class="card hud">
+        <div class="hud-row"><span class="k">TOP PILL</span><span>Your callsign in your team colour, position in MGRS (or lat/long), heading, and GPS accuracy — green under 10 m, amber to 30 m, red beyond that or when the fix goes stale. <strong>Tap it to recenter on yourself.</strong></span></div>
+        <div class="hud-row"><span class="k">BOTTOM PILL</span><span>Range and bearing to the nearest contact. <strong>Tap it to open that contact.</strong></span></div>
+        <div class="hud-row"><span class="k">CENTRE</span><span>Your blue-force marker. The arrow points the way you are facing.</span></div>
+        <div class="hud-row"><span class="k">☰ LEFT</span><span>Menu — Radar, Contacts, GeoChat, Settings, About.</span></div>
+        <div class="hud-row"><span class="k">◎ RIGHT</span><span>Radar — the same contacts as a proximity scope, with no basemap.</span></div>
+      </div>
+      <h3>Gestures</h3>
+      <ul class="plain">
+        <li><strong>Long-press the map</strong> — drops a waypoint <em>at that point</em>,
+          not just at your own position, and shares it to the team. The watch
+          buzzes to confirm.</li>
+        <li><strong>Tap a marker</strong> — opens that contact's full CoT detail.</li>
+        <li><strong>Rotary crown</strong> — zooms the map; scrolls every list.</li>
+        <li><strong>Pinch or double-tap</strong> — zoom. <strong>Drag</strong> — pan.</li>
+        <li><strong>Swipe from the left edge</strong> — goes back a screen.</li>
+      </ul>
+      <div class="note">
+        A one-time hint on first launch names the three non-obvious gestures
+        (long-press, crown, marker tap), then never shows again.
+      </div>
+      <div class="note">
+        <strong>Panning never closes the app.</strong> Wear normally dismisses an
+        app on any left-to-right swipe — which on a map is the same movement as a
+        pan — so that window-level gesture is switched off and back navigation
+        belongs entirely to the app. Every screen still swipes back to the one
+        before it. The map is the home screen with nothing behind it, so to leave
+        the app use the side button.
+      </div>
+
+      <h3>The radar scope</h3>
+      <p>
+        Tap <strong>◎</strong> on the right of the map (or Menu → Radar) for a
+        proximity scope: you at the centre, everyone else placed by range and
+        bearing, no tiles involved. It is the view that works identically with a
+        full tile cache, an empty one, or no data connection at all — and it is
+        usually the faster answer to "where is my team relative to me".
+      </p>
+      <ul class="plain">
+        <li><strong>The number at the top</strong> is the radius of the outer
+          ring. It sizes itself so the furthest contact fits with room to spare.
+          The <strong>crown</strong> pins it to a fixed range; <strong>tap the
+          number</strong> to hand ranging back to the app.</li>
+        <li><strong>Tap a blip</strong> for that contact's detail;
+          <strong>long-press</strong> to navigate to it. The target is the same
+          one the map uses, so it is still there when you swipe back.</li>
+        <li><strong>Tap the centre</strong> — yourself — to return to the map.</li>
+        <li><strong>Tap the chip</strong> at the bottom for north-up or
+          track-up.</li>
+        <li>A contact past the outer ring becomes a <strong>chevron on the
+          rim</strong> pointing its way. One that has stopped reporting goes
+          <strong>hollow</strong> — a last known position, still shown, visibly
+          not fresh.</li>
+      </ul>
+      <div class="note">
+        The sweep is decorative, not a sensor: it paints contacts the app already
+        knows about. Turn it off in <strong>Settings → Radar sweep</strong> if
+        you would rather not run a continuous animation. In always-on the scope
+        drops to the outer ring and your own marker.
+      </div>
+
+      <h3>Navigating to something</h3>
+      <p>
+        Open a contact or waypoint and tap <strong>Navigate to</strong>. The map
+        draws a dashed line from you to it, and the bottom pill switches to that
+        target — marked with <code>›</code> — reporting range and bearing
+        continuously as you move, rather than tracking whatever is nearest. Tap
+        <strong>Stop navigating</strong> to clear it. If the target is deleted or
+        stops reporting, the app drops it for you.
+      </p>
+
+      <h3>Raising an emergency</h3>
+      <p>
+        <strong>Hold the menu button</strong> to raise a 911 Alert. A red banner
+        appears; <strong>tap it</strong> to stand down. Raising is a hold and
+        cancelling is a tap on purpose — a real alert should be hard to trigger
+        by accident and a false one easy to stop.
+      </p>
+      <p>
+        These are the ecosystem's own alert types (<code>b-a-o-tbl</code>,
+        <code>b-a-o-pan</code>, <code>b-a-o-opn</code>, cancelled with
+        <code>b-a-o-can</code>), so the alert shows up as a real emergency in ATAK
+        and on your TAK server rather than as a marker only this app understands.
+        While active it re-broadcasts every 10 seconds, and cancelling sends an
+        explicit stand-down instead of just going silent.
+      </p>
+
+      <h3>Your track</h3>
+      <p>
+        The map draws a trail of where you have been, so you can backtrack. It
+        records only after real movement — standing still will not fill it with
+        GPS jitter — and keeps the most recent stretch rather than stopping when
+        it fills.
+      </p>
+
+      <h3>The tile</h3>
+      <p>
+        One swipe from the watch face shows your callsign, position, fix accuracy
+        and nearest contact without opening the app; tap it to open the map. It
+        always displays the age of the reading, because the system draws tiles on
+        its own schedule and the figure may be minutes old.
+      </p>
+
+      <h3>Knowing what you can trust</h3>
+      <ul class="plain">
+        <li>A <strong>scale bar</strong> above the bottom pill answers "how far is
+          that?" — metric or imperial, following your Units setting.</li>
+        <li><strong>GPS accuracy</strong> is always on screen next to your heading,
+          and turns red with an age if the fix stops updating.</li>
+        <li>A <strong>LINK…</strong> or <strong>NO LINK</strong> badge appears
+          top-right only when TAK Server is switched on but not connected. No
+          badge means the link is healthy.</li>
+        <li>Contacts older than 45 seconds dim and show their age in red.</li>
+      </ul>
+      <h3>The roster</h3>
+      <p>
+        Contacts are listed nearest-first, with you at the top. A contact whose
+        last report is over 45 seconds old is dimmed and shows its age in red —
+        a position that has stopped updating should not be trusted like a live
+        one.
+      </p>
+      <p>
+        Tapping a contact opens its detail: CoT type, affiliation, team and role,
+        position, range and bearing, accuracy, battery and age. From there you
+        can show it on the map, or delete it if it is one of your waypoints.
+      </p>
+      <p>
+        Waypoints persist across restarts and are shared to your team when a
+        transport is on.
+      </p>
+    </section>
+
+    <section id="symbology">
+      <h2><span class="num">10</span> Symbology</h2>
+      <p>
+        Contacts are drawn with standard MIL-STD-2525 affiliation frames, so a
+        glance tells you what something is. Teammates who report an ATAK team
+        colour are drawn as a filled circle in that colour instead — the same
+        precedence ATAK uses.
+      </p>
+      <div class="legend">
+        <div class="sym">
+          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+            <rect x="6" y="8" width="22" height="18" rx="3" fill="none" stroke="#3D9BE9" stroke-width="2.4"/>
+            <circle cx="17" cy="17" r="2" fill="#3D9BE9"/>
+          </svg>
+          <span class="label"><span class="name">Friendly</span><span class="meta">a-f-*  rectangle</span></span>
+        </div>
+        <div class="sym">
+          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+            <path d="M17 5 L29 17 L17 29 L5 17 Z" fill="none" stroke="#E23B3B" stroke-width="2.4"/>
+            <circle cx="17" cy="17" r="2" fill="#E23B3B"/>
+          </svg>
+          <span class="label"><span class="name">Hostile</span><span class="meta">a-h-*  diamond</span></span>
+        </div>
+        <div class="sym">
+          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+            <rect x="6" y="6" width="22" height="22" fill="none" stroke="#35C759" stroke-width="2.4"/>
+            <circle cx="17" cy="17" r="2" fill="#35C759"/>
+          </svg>
+          <span class="label"><span class="name">Neutral</span><span class="meta">a-n-*  square</span></span>
+        </div>
+        <div class="sym">
+          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+            <path d="M17 6 a6 6 0 0 1 6 6 a6 6 0 0 1 6 5 a6 6 0 0 1 -6 6 a6 6 0 0 1 -6 5 a6 6 0 0 1 -6 -5 a6 6 0 0 1 -6 -6 a6 6 0 0 1 6 -5 a6 6 0 0 1 6 -6 Z"
+                  fill="none" stroke="#F2C037" stroke-width="2.2"/>
+            <circle cx="17" cy="17" r="2" fill="#F2C037"/>
+          </svg>
+          <span class="label"><span class="name">Unknown</span><span class="meta">a-u-*  quatrefoil</span></span>
+        </div>
+        <div class="sym">
+          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+            <circle cx="17" cy="17" r="9" fill="#00E0C0" stroke="#FFFFFF" stroke-width="2"/>
+          </svg>
+          <span class="label"><span class="name">Teammate</span><span class="meta">team colour</span></span>
+        </div>
+        <div class="sym">
+          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+            <path d="M17 29 C8 20 10 10 17 10 C24 10 26 20 17 29 Z" fill="none" stroke="#00E0C0" stroke-width="2.4"/>
+            <circle cx="17" cy="15.5" r="2.4" fill="#00E0C0"/>
+          </svg>
+          <span class="label"><span class="name">Waypoint</span><span class="meta">b-m-p-w</span></span>
+        </div>
+      </div>
+    </section>
+
+    <section id="settings">
+      <h2><span class="num">11</span> Settings reference</h2>
+      <p>
+        Menu → Settings, grouped into <strong>Identity</strong>,
+        <strong>Display</strong>, <strong>Power</strong>, <strong>Network</strong>
+        and <strong>App</strong>. On/off options are switches; the rest cycle
+        through their values on tap. Everything saves immediately, and each
+        switch shows its live state underneath — the mesh group it joined, the
+        server host, whether a certificate is held.
+      </p>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>Setting</th><th>Options</th><th>What it does</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">Callsign</td><td class="opt">your own text</td><td>How you appear to the team. Opens the watch keyboard, handwriting or voice input.</td></tr>
+            <tr><td class="name">Affiliation</td><td class="opt">Friendly · Hostile · Neutral · Unknown</td><td>Your own CoT affiliation.</td></tr>
+            <tr><td class="name">Team</td><td class="opt">14 ATAK colours</td><td>Team colour, sent in the CoT <code>__group</code> element.</td></tr>
+            <tr><td class="name">Role</td><td class="opt">Team Member · Team Lead · HQ · …</td><td>Team role, sent alongside the colour.</td></tr>
+            <tr><td class="name">Coordinates</td><td class="opt">MGRS · Lat / Lon</td><td>Position format in the HUD and roster.</td></tr>
+            <tr><td class="name">Units</td><td class="opt">Metric · Imperial</td><td>Range display.</td></tr>
+            <tr><td class="name">Map</td><td class="opt">Standard · Topographic · Offline</td><td>Tile source. Offline reads local archives and needs no network.</td></tr>
+            <tr><td class="name">Orientation</td><td class="opt">North up · Track up</td><td>Track up rotates the map to your heading.</td></tr>
+            <tr><td class="name">Keep screen on</td><td class="opt">On · Off</td><td>Holds the display awake while the map is open.</td></tr>
+            <tr><td class="name">Follow GPS</td><td class="opt">On · Off</td><td>Auto-recenter as you move.</td></tr>
+            <tr><td class="name">Range rings</td><td class="opt">On · Off</td><td>100 / 250 / 500 / 1000 m reference circles around you on the map.</td></tr>
+            <tr><td class="name">Radar sweep</td><td class="opt">On · Off</td><td>Animated sweep on the radar scope. Off leaves a static scope and no continuous animation.</td></tr>
+            <tr><td class="name">Background track</td><td class="opt">On · Off</td><td>Keep tracking and sharing with the screen off.</td></tr>
+            <tr><td class="name">CoT mesh</td><td class="opt">On · Off</td><td>Local-network team sharing.</td></tr>
+            <tr><td class="name">Mesh format</td><td class="opt">TAK proto · Legacy XML</td><td>Wire format for mesh. Modern ATAK uses TAK proto.</td></tr>
+            <tr><td class="name">TAK Server</td><td class="opt">On · Off</td><td>Streaming connection to a server.</td></tr>
+            <tr><td class="name">Server host</td><td class="opt">host:port</td><td>Tap to reload from <code>tak_server.json</code>.</td></tr>
+            <tr><td class="name">TLS</td><td class="opt">On · Off</td><td>Use the enrolled certificate for a mutual-TLS connection.</td></tr>
+            <tr><td class="name">Enroll cert</td><td class="opt">action</td><td>Request a client certificate from your server.</td></tr>
+            <tr><td class="name">Meshtastic</td><td class="opt">On · Off</td><td>Use a paired LoRa radio as the team link. Needs a radio picked first.</td></tr>
+            <tr><td class="name">Radio setup</td><td class="opt">screen</td><td>Scan for Meshtastic radios, pair one, see the live link state and mesh size.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="network">
+      <h2><span class="num">12</span> Connect your team</h2>
+      <p>
+        There are three independent ways to share position. You can run any or
+        all of them at once.
+      </p>
+
+      <h3>A · CoT mesh (same Wi-Fi, no server)</h3>
+      <p>
+        Turn on <strong>CoT mesh</strong>. The watch joins the TAK default SA
+        multicast group <code>239.2.3.1:6969</code>, broadcasts your position
+        every 3 seconds, and renders teammates it hears. Any ATAK device on the
+        same network will see you and you will see them — no configuration.
+      </p>
+      <div class="note">
+        Mesh depends on the network passing multicast. Most home and hotspot
+        Wi-Fi does; many corporate and guest networks deliberately block it. If
+        nobody appears, that is the first thing to check.
+      </div>
+
+      <h3>B · TAK Server</h3>
+      <p>
+        Point the watch at a server by pushing a small config file, then turn on
+        <strong>TAK Server</strong>:
+      </p>
+      <pre><code>adb push tak_server.json \
+  /sdcard/Android/data/com.atakwatch.minimap/files/tak_server.json</code></pre>
+      <pre><code>{
+  "host": "192.168.1.50",
+  "port": 8087,
+  "tlsPort": 8089,
+  "enrollPort": 8446,
+  "username": "yourname",
+  "password": "yourpassword"
+}</code></pre>
+      <p>
+        Tap <strong>Server host</strong> in Settings to load it. Port
+        <code>8087</code> is a plain streaming-CoT input, which every TAK server,
+        FreeTAKServer and OpenTAKServer accepts.
+      </p>
+
+      <h3>C · Meshtastic radio (no server, no network at all)</h3>
+      <p>
+        The watch can talk straight to a <strong>Meshtastic LoRa radio</strong>
+        over Bluetooth and use the mesh as the team link. No server, no Wi-Fi, no
+        cell coverage, and no phone in the path — the watch is the client and the
+        radio is the transport.
+      </p>
+      <ol class="steps">
+        <li>
+          Power the radio on and make sure it is <em>not</em> already connected
+          to a phone — a radio only accepts one client at a time.
+        </li>
+        <li>
+          On the watch: <strong>Settings → Radio setup</strong>, grant Bluetooth,
+          then <strong>Scan</strong>. Only Meshtastic radios are listed; the scan
+          is filtered at the hardware level.
+        </li>
+        <li>
+          Tap yours. Android will show its own pairing prompt — enter the PIN
+          shown by the radio there. This app never handles it.
+        </li>
+        <li>
+          The <strong>Link</strong> row and the badge on the radar read
+          <strong>Connected</strong> / <strong>LoRa</strong> once the radio has
+          replayed its node database.
+        </li>
+        <li>
+          Tap <strong>Configure radio</strong>. This sets the radio's device role
+          to <strong>TAK</strong> — the role Meshtastic ships for exactly this
+          job, which stops it emitting the routine chatter a general-purpose node
+          sends — and writes your team and role into the radio so it identifies
+          the same way the watch does. The radio reboots once to apply.
+        </li>
+      </ol>
+      <p>
+        The same screen reads back what the radio actually is: firmware, device
+        role, region, modem preset and primary channel. It is worth a glance —
+        what a radio is doing and what you think you configured are not always
+        the same thing.
+      </p>
+      <div class="warn">
+        <strong>Check the region.</strong> A radio with its region left
+        <code>UNSET</code> cannot legally transmit, and from the watch that looks
+        identical to a mesh with nobody on it. The radio screen flags it in red.
+        WTAK will not set it for you: which band you may transmit on is a
+        licensing decision, so set it in the Meshtastic app yourself.
+      </div>
+      <p>
+        Position reports and GeoChat go out as <strong>TAK Packets</strong> on
+        Meshtastic's <code>ATAK_PLUGIN</code> port — the same thing Meshtastic's
+        own ATAK plugin sends — so a phone running that plugin sees you and you
+        see it. Plain Meshtastic nodes with no TAK plugin still show up as
+        contacts from their position and node-info packets, and their text
+        messages arrive in GeoChat.
+      </p>
+      <div class="note">
+        LoRa is slow and shared by the whole team, so position is <em>not</em>
+        sent every 3 seconds the way it is over IP. It goes out when you have
+        moved about 30 m, no more often than every 30 seconds, with a keepalive
+        every 5 minutes when you are standing still. This is deliberate: a team
+        of radios all chattering would leave no airtime for anyone.
+      </div>
+      <div class="note">
+        Not yet flown against physical hardware. The wire format is unit-tested
+        against bytes built from Meshtastic's published schemas and the UI
+        degrades honestly with no adapter, but the first connection to a real
+        radio is the acceptance test. <code>adb logcat -s MeshtasticLink</code>
+        narrates each stage.
+      </div>
+    </section>
+
+    <section id="tls">
+      <h2><span class="num">13</span> TLS enrollment</h2>
+      <p>
+        Production TAK servers require a client certificate. The watch can
+        request one itself, the same way ATAK's quick-connect does.
+      </p>
+      <ol class="steps">
+        <li>
+          <div class="body">
+            <h4>Provide credentials</h4>
+            <p>Push <code>tak_server.json</code> with your server username and password and the enrollment port (usually <code>8446</code>).</p>
+          </div>
+        </li>
+        <li>
+          <div class="body">
+            <h4>Enroll</h4>
+            <p>Settings → <strong>Enroll cert</strong>. The watch generates a
+            2048-bit key and a certificate signing request, sends it to the
+            server's certificate API, and stores the signed certificate.</p>
+          </div>
+        </li>
+        <li>
+          <div class="body">
+            <h4>Turn on TLS</h4>
+            <p>The <strong>TLS</strong> row shows <code>On · cert ✓</code> once a
+            certificate is held. The watch now connects to the TLS port with
+            mutual authentication, trusting only the CA your server returned.</p>
+          </div>
+        </li>
+      </ol>
+      <p>
+        Your password is used once, for enrollment, and is never stored by the
+        app. The certificate and pinned CA live in the app's private storage.
+      </p>
+      <div class="note">
+        The enrollment request itself trusts the server on first contact — the
+        CA is not known until the server returns it. Every CoT connection
+        afterwards is pinned to that CA. Enroll on a network you trust.
+      </div>
+    </section>
+
+    <section id="background">
+      <h2><span class="num">14</span> Background &amp; battery</h2>
+      <p>
+        By default, tracking runs only while the map is on screen. Turn on
+        <strong>Background track</strong> and a foreground service keeps your
+        position and CoT sharing alive with the screen off and the app closed,
+        showing an ongoing notification while it does.
+      </p>
+      <h3>What the app does to save power</h3>
+      <ul class="plain">
+        <li><strong>Always-on display</strong> — in ambient the map is replaced by a
+          black low-power readout; tiles and the compass stop, and GPS drops to a
+          30 second cadence.</li>
+        <li><strong>No polling</strong> — position updates are pushed by the system,
+          not requested on a timer.</li>
+        <li><strong>Radios are opt-in</strong> — mesh and server connections only run
+          when you switch them on.</li>
+      </ul>
+      <div class="warn">
+        Continuous GPS is the single biggest drain on any watch. Expect
+        materially shorter battery life with background tracking on, and plan
+        around it for long operations.
+      </div>
+    </section>
+
+    <section id="trouble">
+      <h2><span class="num">15</span> Troubleshooting</h2>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>Symptom</th><th>Try this</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="name">Stuck on "Acquiring GPS…"</td>
+              <td>Go outside with a clear view of the sky. GPS rarely resolves indoors. On an emulator, send a location from the extended controls.</td>
+            </tr>
+            <tr>
+              <td class="name">Map tiles are blank</td>
+              <td>Online sources download tiles on first view — connect to Wi-Fi once and pan the area you need. On Offline, check the Map row says a file was found, and that you are inside the archive's area and zoom range.</td>
+            </tr>
+            <tr>
+              <td class="name">No contacts appear</td>
+              <td>Confirm a transport is on in Settings. For mesh, check the network passes multicast. For a server, check the host and port.</td>
+            </tr>
+            <tr>
+              <td class="name">Enrollment fails</td>
+              <td>Verify the username, password and enrollment port, and that the server's certificate API is reachable from the watch's network.</td>
+            </tr>
+            <tr>
+              <td class="name">TLS says "no cert"</td>
+              <td>Enrollment has not completed. Run Enroll cert and wait for it to report success before enabling TLS.</td>
+            </tr>
+            <tr>
+              <td class="name">Battery draining fast</td>
+              <td>Turn off Background track when you do not need it, and turn off Keep screen on.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p><strong>WTAK v1.8.0</strong> — standalone TAK client for Wear OS, by <strong>NEO207</strong>.</p>
+    <p>
+      Not affiliated with, or endorsed by, the TAK Product Center or Google.
+      "ATAK" and "TAK" refer to the open ecosystem this app interoperates with.
+      Use mesh and server connectivity only on networks you are authorised to
+      operate on.
+    </p>
+  </div>
+</footer>

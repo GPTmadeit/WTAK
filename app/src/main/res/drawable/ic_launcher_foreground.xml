@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Compass ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#7DD87D"
+        android:strokeWidth="2.5"
+        android:pathData="M54,22 a32,32 0 1,0 0.1,0 z" />
+
+    <!-- Cardinal ticks (N / E / S / W) -->
+    <path
+        android:strokeColor="#7DD87D"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,17 L54,25 M83,54 L91,54 M54,83 L54,91 M17,54 L25,54" />
+
+    <!-- Blue-force self navigation marker -->
+    <path
+        android:fillColor="#3D9BE9"
+        android:pathData="M54,37 L67,71 L54,63 L41,71 Z" />
+
+    <!-- Center point -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,57 a2.4,2.4 0 1,0 0.1,0 z" />
+</vector>

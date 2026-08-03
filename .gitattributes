@@ -1,0 +1,21 @@
+# Normalise to LF in the repository; check out native on Windows.
+* text=auto
+
+# Must stay LF even on Windows checkouts, or the shell wrapper won't run.
+gradlew text eol=lf
+*.sh text eol=lf
+
+# Must stay CRLF for cmd.exe.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Never touched.
+*.png binary
+*.jar binary
+*.mbtiles binary
+*.apk binary
+
+# Keeps generated wrappers and screenshots out of language statistics and
+# collapsed in pull-request diffs.
+gradle/wrapper/** linguist-vendored
+screenshots/** linguist-documentation
