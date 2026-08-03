@@ -39,9 +39,25 @@ multicast, with TAK servers over streaming TCP or mutual TLS, and with a
 - **GeoChat**, breadcrumb trail, waypoints, bloodhound navigation, a glanceable
   tile, and always-on ambient support.
 
-📖 **[Install &amp; field guide](docs/index.html)** — step-by-step install, map and
-settings reference, team connectivity, TLS enrollment, troubleshooting.
-Open `docs/index.html` locally or serve `docs/` as a GitHub Pages site.
+## Get it
+
+**[Download the latest APK](https://github.com/GPTmadeit/WTAK/releases/latest)**,
+then side-load it over ADB:
+
+```
+adb connect 192.168.1.42:5555        # your watch's IP, from Developer options
+adb install -r wtak-1.8.0.apk
+```
+
+Or build it yourself — no API keys, no gated SDKs, nothing to sign up for:
+
+```
+./gradlew :app:assembleDebug
+```
+
+📖 **[Install &amp; field guide](https://gptmadeit.github.io/WTAK/)** — step-by-step
+install, map and settings reference, team connectivity, TLS enrollment,
+troubleshooting. (Source: [`docs/index.html`](docs/index.html).)
 
 > **Everything on screen is real.** There is no sample or placeholder data: the
 > roster contains your own GPS fix, contacts received over the network, and
