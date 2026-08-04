@@ -69,28 +69,61 @@ troubleshooting. (Source: [`docs/index.html`](docs/index.html).)
 
 ## Motion, cutouts & radio configuration (v1.8.0)
 
-### The back gesture, fixed at the root
+### The back gesture (fixed properly in v1.8.1)
+
+**v1.8.0 shipped a regression: it set `android:windowSwipeToDismiss=false`, which
+kills the back swipe outright on Wear OS 6.** Upgrade to v1.8.1.
+
+The reasoning behind that change was wrong. Wear's back swipe is a full-screen
+gesture owned by the platform, and the Compose nav host takes its gesture *from*
+the platform — so turning the window attribute off doesn't hand back navigation
+to the app, it removes the gesture source from every screen. It looked fine on a
+Wear OS 4 emulator, where the older dismissal path still applied, and only broke
+on the hardware people actually wear.
+
+The correct fix keeps the platform gesture enabled and excludes the map's
+interior from it, which is what `setSystemGestureExclusionRects` is for:
+
+```kotlin
+mapView.systemGestureExclusionRects = listOf(Rect(edgePx, 0, width, height))
+```
+
+Back works from every screen; the map's leading 24 dp still goes back, and the
+rest of it pans. Verified on a Wear OS 6 / API 36 emulator — see
+[Verifying gestures](#verifying-gestures).
+
+### The back gesture, first attempt (v1.8.0 — superseded)
 
 Wear dismisses an activity on **any** left-to-right swipe — it is not an edge
 gesture — and that happens at the *window* level, before the composition sees
 the touch. On a map, a pan and a back swipe are the same movement, which is why
 dragging the map sideways kept closing the app.
 
-Two previous attempts fought this in Compose and could not win: restricting
-dismissal with `edgeSwipeToDismiss` only constrains the nav host, and disabling
-the nav host's swipe outright just hands the gesture to the window, which
-dismisses even more eagerly. The actual fix is one line of theme:
+Restricting dismissal with `edgeSwipeToDismiss` only constrains the nav host, so
+it cannot stop the window. Disabling the nav host's swipe hands the gesture
+straight to the window, which is worse. **Disabling the window attribute breaks
+back everywhere on Wear OS 6** — that was the v1.8.0 regression above. See the
+section before this one for what actually works.
 
-```xml
-<item name="android:windowSwipeToDismiss">false</item>
-```
+### Verifying gestures
 
-Back navigation now belongs entirely to the app: the nav host pops screens, and
-the map restricts dismissal to its leading 24 dp so panning is only panning. The
-map is the home screen with nothing to go back to, so leaving the app is the
-side button's job — deliberately, since that is exactly where the accidental
-exits were happening. A regression matrix covering pan, edge swipe, side button
-and back-from-every-screen is in the repo's verification notes.
+Gesture behaviour cannot be trusted to a casual check; three separate rounds of
+this bug were "confirmed fixed" against a probe that was lying:
+
+- **Test on the right platform.** A Wear OS 4 emulator and a Wear OS 6 watch
+  disagree about this gesture entirely. Use an API 36 Wear image
+  (`system-images;android-36;android-wear-signed;x86_64`).
+- **Assert the screen, don't infer it.** Detecting screens by pixel brightness
+  called a tile-less map "not the map"; a fresh AVD sat on the onboarding screen
+  while the script believed it was driving the map. Identify screens from
+  `uiautomator dump`, and make every step assert the screen it expects *before*
+  performing the gesture.
+- **"Still in the app" is not "went back."** An assertion that only checks the
+  app is still in front passes whether back worked or did nothing at all.
+- **`adb input swipe` is not a finger.** It synthesises too few motion events
+  for the velocity tracker: 600 ms swipes register, 150–300 ms ones often do
+  not, and a swipe starting on a clickable can be claimed by it. Retry across
+  profiles before believing a failure.
 
 ### Motion
 

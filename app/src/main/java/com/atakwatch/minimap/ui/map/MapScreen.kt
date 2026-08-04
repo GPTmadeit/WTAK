@@ -553,16 +553,40 @@ private fun MapContent(nav: NavController) {
     // Applied only while the map is the screen in front: it stays composed as
     // the background during a swipe on another screen, and arbitrating from
     // back there would veto that screen's own back gesture.
-    val swipeState = com.atakwatch.minimap.ui.LocalSwipeState.current
-    val isFrontmost = com.atakwatch.minimap.ui.LocalCurrentRoute.current == Routes.MAP
-    val edgeSwipeModifier = if (swipeState != null && isFrontmost) {
-        Modifier.edgeSwipeToDismiss(swipeState, edgeWidth = BACK_EDGE_WIDTH)
-    } else Modifier
+    // Keep the map's interior out of the system's swipe-to-dismiss.
+    //
+    // Wear's back gesture is a full-screen left-to-right swipe owned by the
+    // platform, and the Compose nav host takes its gesture from there — so this
+    // cannot be arbitrated in Compose. Restricting the nav host with
+    // `edgeSwipeToDismiss` doesn't stop the platform, and disabling
+    // `windowSwipeToDismiss` doesn't hand the gesture to the app, it removes it
+    // from every screen.
+    //
+    // `setSystemGestureExclusionRects` is the API meant for this: it tells the
+    // platform not to claim gestures starting inside the region, leaving the
+    // leading strip free so back still works from the map's edge. Re-applied on
+    // layout because the rects are in view coordinates and the view has no size
+    // until it has been measured.
+    val exclusionEdgePx = with(LocalDensity.current) { BACK_EDGE_WIDTH.roundToPx() }
+    DisposableEffect(mapView, exclusionEdgePx) {
+        fun apply() {
+            if (mapView.width == 0 || mapView.height == 0) return
+            mapView.systemGestureExclusionRects = listOf(
+                android.graphics.Rect(exclusionEdgePx, 0, mapView.width, mapView.height)
+            )
+        }
+        val listener = android.view.View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> apply() }
+        mapView.addOnLayoutChangeListener(listener)
+        apply()
+        onDispose {
+            mapView.removeOnLayoutChangeListener(listener)
+            mapView.systemGestureExclusionRects = emptyList()
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .then(edgeSwipeModifier)
             .onRotaryScrollEvent { ev ->
                 if (ev.verticalScrollPixels > 0f) mapView.controller.zoomIn() else mapView.controller.zoomOut()
                 true
@@ -845,9 +869,9 @@ private fun MapContent(nav: NavController) {
 private const val FIX_STALE_MS = 20_000L
 
 /**
- * Width of the leading strip that still dismisses on the map. Wear's default is
- * 32.dp; 24.dp keeps the gesture reachable while leaving the map almost the
- * whole surface to pan on.
+ * Width of the leading strip left available to the system back gesture on the
+ * map. Wear's own edge affordance is 32.dp; 24.dp keeps back reachable while
+ * leaving the map almost the whole surface to pan on.
  */
 private val BACK_EDGE_WIDTH = 24.dp
 
