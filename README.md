@@ -565,7 +565,8 @@ heading all continue working with the radio off.
 
 ## Screens
 
-All captured live on a Wear OS emulator (v0.5.1), with mesh + TAK server active:
+All captured live on a Wear OS emulator with mesh + TAK server active — real
+contacts on the wire, not mockups:
 
 **Map & roster**
 
@@ -587,7 +588,7 @@ All captured live on a Wear OS emulator (v0.5.1), with mesh + TAK server active:
 |---|---|---|
 | ![](screenshots/settings-identity.png) | ![](screenshots/settings-team.png) | ![](screenshots/settings-coords.png) |
 
-| Map & orientation | Display & follow | Background tracking (v0.6.0) |
+| Map & orientation | Display & follow | Background tracking |
 |---|---|---|
 | ![](screenshots/settings-map.png) | ![](screenshots/settings-display.png) | ![](screenshots/settings-tracking.png) |
 
