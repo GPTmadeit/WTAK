@@ -46,7 +46,7 @@ then side-load it over ADB:
 
 ```
 adb connect 192.168.1.42:5555        # your watch's IP, from Developer options
-adb install -r wtak-1.8.0.apk
+adb install -r WTAK-1.8.1.apk
 ```
 
 Or build it yourself — no API keys, no gated SDKs, nothing to sign up for:
@@ -67,48 +67,38 @@ troubleshooting. (Source: [`docs/index.html`](docs/index.html).)
 > Meshtastic project. WTAK is an independent, clean-room implementation written
 > against publicly published schemas — see [NOTICE.md](NOTICE.md).
 
-## Motion, cutouts & radio configuration (v1.8.0)
+## Motion, gestures & radio configuration
 
-### The back gesture (fixed properly in v1.8.1)
+### Panning a map without closing the app
 
-**v1.8.0 shipped a regression: it set `android:windowSwipeToDismiss=false`, which
-kills the back swipe outright on Wear OS 6.** Upgrade to v1.8.1.
+Wear's back gesture is a full-screen left-to-right swipe — not an edge gesture —
+and on a map that is the same movement as a pan. Getting both to coexist is
+harder than it looks, because the gesture is owned by the *platform* and the
+Compose nav host takes its gesture from there. Two approaches that seem obvious
+are both wrong:
 
-The reasoning behind that change was wrong. Wear's back swipe is a full-screen
-gesture owned by the platform, and the Compose nav host takes its gesture *from*
-the platform — so turning the window attribute off doesn't hand back navigation
-to the app, it removes the gesture source from every screen. It looked fine on a
-Wear OS 4 emulator, where the older dismissal path still applied, and only broke
-on the hardware people actually wear.
+- `Modifier.edgeSwipeToDismiss` only constrains the nav host, so it cannot stop
+  the window from dismissing.
+- Setting `android:windowSwipeToDismiss=false` doesn't hand back navigation to
+  the app — it removes the gesture source from **every** screen, so nothing can
+  be swiped back from at all. (v1.8.0 shipped exactly this bug; it is fixed in
+  v1.8.1.)
 
-The correct fix keeps the platform gesture enabled and excludes the map's
-interior from it, which is what `setSystemGestureExclusionRects` is for:
+What works is to leave the platform gesture alone and exclude the map's interior
+from it, which is what `setSystemGestureExclusionRects` is for:
 
 ```kotlin
 mapView.systemGestureExclusionRects = listOf(Rect(edgePx, 0, width, height))
 ```
 
-Back works from every screen; the map's leading 24 dp still goes back, and the
-rest of it pans. Verified on a Wear OS 6 / API 36 emulator — see
-[Verifying gestures](#verifying-gestures).
-
-### The back gesture, first attempt (v1.8.0 — superseded)
-
-Wear dismisses an activity on **any** left-to-right swipe — it is not an edge
-gesture — and that happens at the *window* level, before the composition sees
-the touch. On a map, a pan and a back swipe are the same movement, which is why
-dragging the map sideways kept closing the app.
-
-Restricting dismissal with `edgeSwipeToDismiss` only constrains the nav host, so
-it cannot stop the window. Disabling the nav host's swipe hands the gesture
-straight to the window, which is worse. **Disabling the window attribute breaks
-back everywhere on Wear OS 6** — that was the v1.8.0 regression above. See the
-section before this one for what actually works.
+Back works from every screen, the map's leading 24 dp still goes back, and the
+rest of the map pans.
 
 ### Verifying gestures
 
-Gesture behaviour cannot be trusted to a casual check; three separate rounds of
-this bug were "confirmed fixed" against a probe that was lying:
+Gesture behaviour cannot be trusted to a casual check. Three separate rounds of
+the bug above were "confirmed fixed" against a probe that was lying, so the
+verification suite in this repo follows four rules:
 
 - **Test on the right platform.** A Wear OS 4 emulator and a Wear OS 6 watch
   disagree about this gesture entirely. Use an API 36 Wear image
@@ -173,7 +163,7 @@ nobody on it — so it is called out in red. Which band a radio may use is a
 licensing decision belonging to whoever operates it, not something this app will
 pick on their behalf.
 
-## Radar scope & Meshtastic LoRa (v1.7.0)
+## Radar scope & Meshtastic LoRa
 
 Two additions that between them let the watch work with no basemap, no server,
 no cell coverage and no phone.
@@ -239,7 +229,7 @@ the path. Settings → Radio.
   hemisphere, and `is_compressed` packets whose unishox2 callsigns are dropped
   rather than rendered as garbage.
 
-### Also in 1.7.0
+### Also on the scope
 
 - **GPS and compass are owned app-wide.** They used to belong to the map screen,
   so opening Contacts, GeoChat or the radar froze your own position while the
@@ -253,7 +243,7 @@ the path. Settings → Radio.
   now simply disabled for the map destination — where it only ever exited the
   app — and every other screen keeps the standard full-surface Wear back swipe.
 
-## TLS certificate enrollment (v0.5.0)
+## TLS certificate enrollment
 
 The watch enrolls with a TAK Server the same way ATAK's Quick Connect does, then
 streams CoT over **mutual TLS** — verified end-to-end on the emulator against
@@ -300,7 +290,7 @@ Against a real server: point `tak_server.json` at your TAK Server / OpenTAKServe
 FreeTAKServer cert-enrollment endpoint (8446) with a valid username/password; the
 password is used once for enrollment and never stored.
 
-## Proven interop (v0.4.0)
+## Proven interop
 
 Verified live on a Wear OS emulator against a fake ATAK EUD / TAK server
 ([`tools/FakeEud.java`](tools/FakeEud.java)) speaking the real protocols:
@@ -324,7 +314,7 @@ hand-encoded ATAK-shaped frame (`./gradlew :app:testDebugUnitTest`).
 
 ---
 
-## Built for the Pixel Watch 4 (v0.6.0)
+## Built for the Pixel Watch 4
 
 | PW4 hardware / platform | What the app does with it |
 |---|---|
@@ -352,7 +342,7 @@ hand-encoded ATAK-shaped frame (`./gradlew :app:testDebugUnitTest`).
   keystore.
 - **Themed launcher icon** (monochrome layer) for Wear OS 6.
 
-## GeoChat, range rings & gesture fix (v1.6.0)
+## GeoChat & range rings
 
 **GeoChat.** Real ATAK chat (`b-t-f` with a `__chat` detail and `<remarks>` body),
 broadcast to *All Chat Rooms* so ATAK clients and TAK servers see it natively.
@@ -377,7 +367,7 @@ anything else. They now live above the navigation graph.
 |---|---|
 | ![](screenshots/menu.png) | ![](screenshots/geochat.png) |
 
-## Tile, trail & emergency beacon (v1.5.0)
+## Tile, trail & emergency beacon
 
 **Glanceable tile.** One swipe from the watch face: callsign, position, fix
 accuracy and nearest contact — without opening the app. Tapping it opens the
@@ -409,7 +399,10 @@ be hard to trigger by accident, a false one easy to stop.
 
 ## Release & updates
 
-[`RELEASE.md`](RELEASE.md) covers the full process. The short version:
+Version history lives on
+**[Releases](https://github.com/GPTmadeit/WTAK/releases)** — each entry has the
+signed APK and what changed. [`RELEASE.md`](RELEASE.md) covers the process. The
+short version:
 
 - **Updates install over the previous version** — verified on device by
   installing `versionCode` 13 on top of 12 with no uninstall: settings,
@@ -423,7 +416,7 @@ be hard to trigger by accident, a false one easy to stop.
 - Backup is disabled and the adb debug hooks are compiled out of release builds,
   because the app holds an enrolled client certificate and private key.
 
-## EUD phone bridge & onboarding (v1.4.0)
+## EUD phone bridge & onboarding
 
 The watch is a standalone TAK client, but when you already carry an EUD running
 ATAK, configuring the same operator twice is wasted work — and a 1.4" screen is
@@ -463,7 +456,7 @@ Maven. The README there has the drop-in steps.
 own mesh, own server connection, own certificate enrolment. Settings →
 **Sync from phone** re-pulls later, e.g. after changing your callsign in ATAK.
 
-## Navigation & situational awareness (v1.3.0)
+## Navigation & situational awareness
 
 **Bloodhound** — open any contact or waypoint and tap **Navigate to**. The map
 draws a dashed line from you to it and the bottom pill reports range and bearing
@@ -485,7 +478,7 @@ watch keyboard or voice, keeping their uid so an active nav target survives.
 |---|---|
 | ![](screenshots/map-bloodhound.png) | ![](screenshots/entity-actions.png) |
 
-## Gesture-driven interface (v1.2.0)
+## Gesture-driven interface
 
 A 454 px round screen has no room for a button grid, so the map has **one**
 button — the menu — and everything else is a gesture:
@@ -542,7 +535,7 @@ computer on the same Wi-Fi, and run `java tools/FakeEud.java inject 239.2.3.1`
 to transmit onto the actual TAK mesh group — or just enable CoT mesh next to a
 device running ATAK.
 
-## Offline maps (v1.1.0)
+## Offline maps
 
 The map works with **no network at all**. Drop tile archives into the app's
 maps folder and select **Map → Offline**:
