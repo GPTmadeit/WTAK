@@ -7,10 +7,15 @@ import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
@@ -80,15 +85,32 @@ object Updater {
     private val _state = MutableStateFlow<State>(State.Idle)
     val state: StateFlow<State> = _state.asStateFlow()
 
+    /**
+     * Update work runs here, not in the caller's composition.
+     *
+     * A screen's `rememberCoroutineScope` dies the moment that screen leaves
+     * the composition — including when this object's own state change removes
+     * the button that started the work. Downloading and installing an APK must
+     * outlive scrolling, recomposition and navigating away, so it is owned at
+     * app scope and the UI only ever triggers it.
+     */
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** At most one check or install at a time; the UI has one button for each. */
+    private var job: Job? = null
+
     fun reset() { _state.value = State.Idle }
 
-    suspend fun check() {
-        _state.value = State.Checking
-        _state.value = when (val result = UpdateChecker.latest()) {
-            is UpdateChecker.Result.UpdateAvailable -> State.Available(result.release)
-            UpdateChecker.Result.UpToDate -> State.UpToDate
-            UpdateChecker.Result.NoAsset -> State.Failed("Release has no APK attached")
-            is UpdateChecker.Result.Failed -> State.Failed(result.reason)
+    fun check() {
+        if (job?.isActive == true) return
+        job = scope.launch {
+            _state.value = State.Checking
+            _state.value = when (val result = UpdateChecker.latest()) {
+                is UpdateChecker.Result.UpdateAvailable -> State.Available(result.release)
+                UpdateChecker.Result.UpToDate -> State.UpToDate
+                UpdateChecker.Result.NoAsset -> State.Failed("Release has no APK attached")
+                is UpdateChecker.Result.Failed -> State.Failed(result.reason)
+            }
         }
     }
 
@@ -96,7 +118,13 @@ object Updater {
      * Download the release, verify it is genuinely an update to *this* app, and
      * ask the platform to install it.
      */
-    suspend fun install(context: Context, release: UpdateChecker.Release) {
+    fun install(context: Context, release: UpdateChecker.Release) {
+        if (job?.isActive == true) return
+        val app = context.applicationContext
+        job = scope.launch { runInstall(app, release) }
+    }
+
+    private suspend fun runInstall(context: Context, release: UpdateChecker.Release) {
         val app = context.applicationContext
 
         // Checked before the download, not after: spending 10 MB of someone's
@@ -111,6 +139,10 @@ object Updater {
             download(app, release) { fraction ->
                 _state.value = State.Downloading(release, fraction)
             }
+        } catch (e: CancellationException) {
+            // Being cancelled is not a failure to report; it is the caller
+            // going away. Reporting it puts coroutine plumbing on screen.
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "download failed: ${e.message}")
             _state.value = State.Failed("Download failed — ${e.message ?: "no network"}")

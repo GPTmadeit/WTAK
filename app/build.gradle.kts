@@ -35,8 +35,8 @@ android {
         // every supported watch from Wear OS 3 up to the Pixel Watch 4.
         minSdk = 30
         targetSdk = 36
-        versionCode = 19
-        versionName = "1.9.0"
+        versionCode = 20
+        versionName = "1.9.1"
     }
 
     signingConfigs {

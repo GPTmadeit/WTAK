@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,7 +23,6 @@ import com.atakwatch.minimap.ui.components.RotaryScalingLazyColumn
 import com.atakwatch.minimap.ui.components.SectionHeader
 import com.atakwatch.minimap.update.UpdateChecker
 import com.atakwatch.minimap.update.Updater
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
@@ -37,7 +35,6 @@ import kotlin.math.roundToInt
 @Composable
 fun UpdateScreen() {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val state by Updater.state.collectAsStateWithLifecycle()
 
     // Check on arrival; the screen exists to answer one question.
@@ -65,7 +62,7 @@ fun UpdateScreen() {
 
             is Updater.State.UpToDate -> {
                 item { Status("You are on the latest release.") }
-                item { CheckAgain(scope) }
+                item { CheckAgain() }
             }
 
             is Updater.State.Available -> {
@@ -92,7 +89,7 @@ fun UpdateScreen() {
                 // watch, which buried the one control this screen exists for.
                 item {
                     Button(
-                        onClick = { scope.launch { Updater.install(context, s.release) } },
+                        onClick = { Updater.install(context, s.release) },
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text("Download & install") }
                 }
@@ -162,7 +159,7 @@ fun UpdateScreen() {
                 }
                 item {
                     Button(
-                        onClick = { scope.launch { Updater.install(context, s.release) } },
+                        onClick = { Updater.install(context, s.release) },
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text("Try again") }
                 }
@@ -188,7 +185,7 @@ fun UpdateScreen() {
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                item { CheckAgain(scope) }
+                item { CheckAgain() }
             }
         }
 
@@ -220,9 +217,9 @@ private fun Status(text: String) {
 }
 
 @Composable
-private fun CheckAgain(scope: kotlinx.coroutines.CoroutineScope) {
+private fun CheckAgain() {
     Button(
-        onClick = { scope.launch { Updater.check() } },
+        onClick = { Updater.check() },
         modifier = Modifier.fillMaxWidth(),
     ) { Text("Check again") }
 }

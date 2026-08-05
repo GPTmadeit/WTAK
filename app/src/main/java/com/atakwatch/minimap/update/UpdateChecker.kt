@@ -2,6 +2,7 @@ package com.atakwatch.minimap.update
 
 import android.util.Log
 import com.atakwatch.minimap.BuildConfig
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -50,9 +51,26 @@ object UpdateChecker {
     }
 
     suspend fun latest(): Result = withContext(Dispatchers.IO) {
-        runCatching { fetch() }
-            .onFailure { Log.w(TAG, "check failed: ${it.message}") }
-            .getOrElse { Result.Failed(it.message ?: "no network") }
+        try {
+            fetch()
+        } catch (e: CancellationException) {
+            // runCatching would swallow this and turn it into a Failed state,
+            // which is how "The coroutine scope left the composition" ended up
+            // rendered to the wearer as though it were a network error.
+            // Cancellation is not a result; it has to propagate.
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "check failed: ${e.message}")
+            Result.Failed(friendly(e))
+        }
+    }
+
+    /** Network faults phrased for someone on a watch, not a stack trace. */
+    private fun friendly(e: Exception): String = when (e) {
+        is java.net.UnknownHostException -> "No connection"
+        is java.net.SocketTimeoutException -> "GitHub timed out"
+        is javax.net.ssl.SSLException -> "Secure connection failed"
+        else -> e.message?.takeIf { it.isNotBlank() } ?: "Could not reach GitHub"
     }
 
     private fun fetch(): Result {

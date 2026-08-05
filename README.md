@@ -6,13 +6,18 @@ team, and a map — on your wrist, with no phone required.
 [![Licence](https://img.shields.io/badge/licence-Apache--2.0-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/Wear%20OS-3%20…%206-4285F4)](https://developer.android.com/training/wearables)
 [![minSdk](https://img.shields.io/badge/minSdk-30-brightgreen)](app/build.gradle.kts)
-[![Tests](https://img.shields.io/badge/tests-77%20passing-brightgreen)](app/src/test)
+[![Tests](https://img.shields.io/badge/tests-84%20passing-brightgreen)](app/src/test)
+[![Latest](https://img.shields.io/github/v/release/GPTmadeit/WTAK?label=latest)](https://github.com/GPTmadeit/WTAK/releases/latest)
 
-WTAK is a genuine **TAK client**, not a viewer: it speaks the real wire formats
-of the ecosystem — **TAK Protocol Version 1 (protobuf)** and **Cursor-on-Target
-XML** — so it exchanges position with actual ATAK end-user devices over mesh SA
-multicast, with TAK servers over streaming TCP or mutual TLS, and with a
-**Meshtastic LoRa radio** over Bluetooth when there is no network at all.
+### In one paragraph
+
+Put your team on your wrist. WTAK shows where you are and where everyone else
+is, on a map or on a radar-style scope — and it talks to real
+[ATAK](https://tak.gov) devices, so the people you are tracking can be running
+ATAK on a phone, and they will see you too. It connects over Wi-Fi, over a TAK
+server, or over a **[Meshtastic](https://meshtastic.org) LoRa radio** when there
+is no signal at all. No phone needs to be paired, and nothing needs an internet
+connection once your maps are downloaded.
 
 | Map | Radar scope | Contacts |
 |:---:|:---:|:---:|
@@ -24,46 +29,61 @@ multicast, with TAK servers over streaming TCP or mutual TLS, and with a
 | <img src="screenshots/menu.png" width="230"> | <img src="screenshots/radio-setup.png" width="230"> | <img src="screenshots/radar-navtarget.png" width="230"> |
 | Radar, contacts, GeoChat, settings. | Pair a LoRa radio and make it the TAK connector. | Long-press a contact to walk it in. |
 
-## What it does
+## What you get
 
-- **Real CoT on the wire** — self PLI as a real EUD (`ANDROID-<androidId>` uid,
-  `a-f-G-U-C`, GPS-derived `ce`/`le`, battery, course/speed, `takv`), ATAK team
-  colours and roles in `__group`, MIL-STD-2525 affiliation frames.
-- **Three independent team links, run any or all at once** — mesh SA multicast
-  (`239.2.3.1:6969`), a TAK server (plain STCP or mutual TLS with certificate
-  enrollment), and a Meshtastic LoRa radio.
-- **Works with nothing** — offline tile archives, a scope that needs no
-  basemap, and a radio link that needs no infrastructure. Airplane-mode proven.
-- **Emergency beacon** — real `b-a-o-*` alert types, so it lands in ATAK as an
-  emergency rather than as a marker only this app understands.
-- **GeoChat**, breadcrumb trail, waypoints, bloodhound navigation, a glanceable
-  tile, and always-on ambient support.
-- **Updates itself from the watch** — checks this repo's Releases, verifies the
-  signature, installs. No cable after the first install.
+| | |
+|---|---|
+| 🗺️ **A real map** | Your position in MGRS or lat/lon, heading, and how good your GPS fix is. Works offline once you've loaded map tiles. |
+| 🎯 **A radar scope** | Everyone on your team as blips by distance and direction. Needs no map data at all — it works anywhere. |
+| 👥 **Your team, live** | Contacts sorted nearest-first, with how long ago each was heard from. Tap one to navigate to it. |
+| 📻 **Three ways to connect** | Local Wi-Fi mesh, a TAK server, or a Meshtastic LoRa radio. Use any or all at once. |
+| 🆘 **Emergency beacon** | Hold the menu button to broadcast a 911 alert that shows up as a real emergency in ATAK. |
+| 💬 **GeoChat** | Send and receive team messages, by voice if you like. |
+| ⬇️ **Updates itself** | Checks this page for new versions and installs them, on the watch. |
 
-## Get it
+## Install it
 
-**[Download the latest APK](https://github.com/GPTmadeit/WTAK/releases/latest)**,
-then side-load it over ADB:
+### The easy way — no computer
+
+Use **[WatchPush](https://github.com/GPTmadeit/WatchPush)**, which sideloads APKs
+onto a Pixel Watch straight from your phone over Wireless debugging:
+
+1. **[Download the latest APK](https://github.com/GPTmadeit/WTAK/releases/latest)**
+   on your phone
+2. Open WatchPush, pick the APK, push it to the watch
+
+That's it. **After this first install you never need either again** — WTAK
+updates itself from **Settings → Update**.
+
+### The usual way — from a computer
 
 ```
 adb connect 192.168.1.42:5555        # your watch's IP, from Developer options
-adb install -r WTAK-1.9.0.apk
+adb install -r WTAK-1.9.1.apk
 ```
 
-You only need a cable once: from then on **Settings → Update** takes new
-releases straight from this repository, on the watch. See
-[Updating from the watch](#updating-from-the-watch).
+### Build it yourself
 
-Or build it yourself — no API keys, no gated SDKs, nothing to sign up for:
+No API keys, no gated SDKs, nothing to sign up for:
 
 ```
 ./gradlew :app:assembleDebug
 ```
 
-📖 **[Install &amp; field guide](https://gptmadeit.github.io/WTAK/)** — step-by-step
-install, map and settings reference, team connectivity, TLS enrollment,
-troubleshooting. (Source: [`docs/index.html`](docs/index.html).)
+## First run
+
+1. Open WTAK. It asks whether to pull your callsign and team from a phone
+   running ATAK, or to set them up on the watch — either is fine.
+2. Allow location when asked. Your position appears within a few seconds
+   outdoors.
+3. To see teammates, turn on a connection in **Settings → Network**:
+   - **CoT mesh** — everyone on the same Wi-Fi, no setup
+   - **TAK Server** — enter your server's address
+   - **Meshtastic** — pair a LoRa radio in **Settings → Radio setup**
+
+📖 **[Full install &amp; field guide](https://gptmadeit.github.io/WTAK/)** — every
+screen and setting explained, with troubleshooting.
+(Source: [`docs/index.html`](docs/index.html).)
 
 > **Everything on screen is real.** There is no sample or placeholder data: the
 > roster contains your own GPS fix, contacts received over the network, and
@@ -79,6 +99,14 @@ troubleshooting. (Source: [`docs/index.html`](docs/index.html).)
 
 **Settings → Update** checks this repository's Releases, shows what changed, and
 installs the new version — no phone, no cable, no computer.
+
+**The first update needs one extra tap.** Wear will say it *"isn't allowed to
+install unknown apps from this source"* — tap **Settings**, allow it, then
+confirm. One-time; after that updates go straight to the confirmation. (If the
+buttons look missing, scroll — the system dialog is taller than a round screen.)
+
+<details>
+<summary>How it works, and why it is safe</summary>
 
 A sideloaded app has no store behind it, so without this the only way to take a
 fix is to find a laptop, which is a poor answer when the thing needing the fix is
@@ -100,13 +128,11 @@ strapped to your wrist. The flow is:
 Nothing installs without you tapping through it, and an APK signed with any
 other key is refused.
 
-**The first update needs one extra step.** Wear will say it *"isn't allowed to
-install unknown apps from this source"* — tap **Settings**, allow it, and confirm.
-That is a one-time switch; later updates go straight to the confirmation.
-
 > Verified end to end on a Wear OS 6 emulator: a build stamped 1.8.0 found the
 > published 1.8.1, downloaded it from GitHub, verified the signature and
 > installed it, coming back up as 1.8.1.
+
+</details>
 
 Updates preserve your settings, waypoints and enrolled certificates — they are
 ordinary in-place upgrades signed with the same key.
