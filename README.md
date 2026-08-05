@@ -38,6 +38,8 @@ multicast, with TAK servers over streaming TCP or mutual TLS, and with a
   emergency rather than as a marker only this app understands.
 - **GeoChat**, breadcrumb trail, waypoints, bloodhound navigation, a glanceable
   tile, and always-on ambient support.
+- **Updates itself from the watch** — checks this repo's Releases, verifies the
+  signature, installs. No cable after the first install.
 
 ## Get it
 
@@ -46,8 +48,12 @@ then side-load it over ADB:
 
 ```
 adb connect 192.168.1.42:5555        # your watch's IP, from Developer options
-adb install -r WTAK-1.8.1.apk
+adb install -r WTAK-1.9.0.apk
 ```
+
+You only need a cable once: from then on **Settings → Update** takes new
+releases straight from this repository, on the watch. See
+[Updating from the watch](#updating-from-the-watch).
 
 Or build it yourself — no API keys, no gated SDKs, nothing to sign up for:
 
@@ -66,6 +72,44 @@ troubleshooting. (Source: [`docs/index.html`](docs/index.html).)
 > **Not affiliated with the TAK Product Center**, the U.S. Government, or the
 > Meshtastic project. WTAK is an independent, clean-room implementation written
 > against publicly published schemas — see [NOTICE.md](NOTICE.md).
+
+## Updating from the watch
+
+<img src="screenshots/update-available.png" width="200" align="right">
+
+**Settings → Update** checks this repository's Releases, shows what changed, and
+installs the new version — no phone, no cable, no computer.
+
+A sideloaded app has no store behind it, so without this the only way to take a
+fix is to find a laptop, which is a poor answer when the thing needing the fix is
+strapped to your wrist. The flow is:
+
+1. Ask GitHub's public Releases API what the latest version is, and compare it
+   numerically against the running build. (Numerically, not as text — `1.10.0`
+   sorts *before* `1.9.0` as a string, which would silently stop offering
+   updates after v1.9.)
+2. Show the version, the download size and the release notes, before spending
+   anything on the download.
+3. Download the signed APK over HTTPS.
+4. **Verify it before installing** — that the APK is this package, and that its
+   signing certificate matches the installed app's. Android enforces the second
+   check anyway; doing it here turns a cryptic platform failure into a sentence
+   that says what is actually wrong.
+5. Hand it to the platform's package installer, which asks you to confirm.
+
+Nothing installs without you tapping through it, and an APK signed with any
+other key is refused.
+
+**The first update needs one extra step.** Wear will say it *"isn't allowed to
+install unknown apps from this source"* — tap **Settings**, allow it, and confirm.
+That is a one-time switch; later updates go straight to the confirmation.
+
+> Verified end to end on a Wear OS 6 emulator: a build stamped 1.8.0 found the
+> published 1.8.1, downloaded it from GitHub, verified the signature and
+> installed it, coming back up as 1.8.1.
+
+Updates preserve your settings, waypoints and enrolled certificates — they are
+ordinary in-place upgrades signed with the same key.
 
 ## Motion, gestures & radio configuration
 

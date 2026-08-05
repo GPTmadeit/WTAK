@@ -35,6 +35,13 @@
     <!-- Ongoing notification for the tracking service (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Update the app from its own GitHub releases, on the watch. This is a
+         sideloaded app with no store behind it, so without this the only way to
+         take a fix is a computer and a cable. The platform still asks the
+         wearer to confirm every install, and still refuses any APK not signed
+         with the same key. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <application
         android:name=".ATAKWatchApp"
         android:allowBackup="false"
@@ -85,6 +92,16 @@
                 android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/ic_launcher_foreground" />
         </service>
+
+        <!-- Outcome of a self-update install session. Not exported: the only
+             sender is our own PendingIntent, handed to the package installer. -->
+        <receiver
+            android:name=".update.InstallReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.atakwatch.minimap.INSTALL_STATUS" />
+            </intent-filter>
+        </receiver>
 
         <!-- Receives identity + relayed CoT from a paired EUD running ATAK. -->
         <service

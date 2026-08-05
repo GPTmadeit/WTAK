@@ -33,6 +33,7 @@ import com.atakwatch.minimap.ui.onboarding.OnboardingScreen
 import com.atakwatch.minimap.ui.radar.RadarScreen
 import com.atakwatch.minimap.ui.radio.RadioScreen
 import com.atakwatch.minimap.ui.settings.SettingsScreen
+import com.atakwatch.minimap.ui.update.UpdateScreen
 
 object Routes {
     const val MAP = "map"
@@ -44,6 +45,7 @@ object Routes {
     const val CHAT = "chat"
     const val RADAR = "radar"
     const val RADIO = "radio"
+    const val UPDATE = "update"
 
     fun detail(uid: String): String = "$DETAIL/${android.net.Uri.encode(uid)}"
 }
@@ -106,6 +108,7 @@ fun ATAKWatchRoot() {
                 composable(Routes.CONTACTS) { ContactsScreen(nav) }
                 composable(Routes.SETTINGS) { SettingsScreen(nav) }
                 composable(Routes.ABOUT) { AboutScreen() }
+                composable(Routes.UPDATE) { UpdateScreen() }
                 composable(Routes.CHAT) { ChatScreen(onSend = { ChatSender.send(it) }) }
                 composable("${Routes.DETAIL}/{uid}") { entry ->
                     EntityDetailScreen(nav, entry.arguments?.getString("uid").orEmpty())

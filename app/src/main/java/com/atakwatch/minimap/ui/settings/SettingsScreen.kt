@@ -9,6 +9,7 @@ import androidx.wear.input.RemoteInputIntentHelper
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.SettingsRemote
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -316,6 +317,9 @@ fun SettingsScreen(nav: NavController) {
         }
 
         item { SectionHeader("App") }
+        item {
+            NavRow(Icons.Filled.SystemUpdate, "Update") { nav.navigate(Routes.UPDATE) }
+        }
         item { NavRow(Icons.Filled.Info, "About") { nav.navigate(Routes.ABOUT) } }
     }
 }
